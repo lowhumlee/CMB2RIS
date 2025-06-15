@@ -437,8 +437,7 @@ with col1:
     convert_button = st.button('🔄 Convert to RIS')
 
 with col2:
-    # Download button is enabled/disabled based on state
- if st.session_state.ris_output:
+    if st.session_state.ris_output:
         download_button = st.download_button(
             label='📥 Download RIS File',
             data=st.session_state.ris_output.encode('utf-8'),
