@@ -438,13 +438,22 @@ with col1:
 
 with col2:
     # Download button is enabled/disabled based on state
-    download_button = st.download_button(
-        label='📥 Download RIS File',
-        data=st.session_state.ris_output.encode('utf-8'),
-        file_name='bibliography.ris',
-        mime='application/x-research-info-systems',
-        disabled=st.session_state.download_disabled
-    )
+ if st.session_state.ris_output:
+        download_button = st.download_button(
+            label='📥 Download RIS File',
+            data=st.session_state.ris_output.encode('utf-8'),
+            file_name='bibliography.ris',
+            mime='application/x-research-info-systems',
+            disabled=False
+        )
+    else:
+        download_button = st.download_button(
+            label='📥 Download RIS File',
+            data="".encode('utf-8'),
+            file_name='bibliography.ris',
+            mime='application/x-research-info-systems',
+            disabled=True
+        )
 
 with col3:
     clear_button = st.button('🗑️ Clear All')
@@ -493,7 +502,7 @@ if convert_button:
 
     # Rerun to update the UI based on session state
     st.experimental_rerun()
-
+    st.stop()
 elif clear_button:
     st.session_state.ris_output = ""
     st.session_state.download_disabled = True
@@ -502,6 +511,7 @@ elif clear_button:
 
     # Rerun to clear and update the UI
     st.experimental_rerun()
+    st.stop()
 else:
     # Initial display or if no button is pressed
     if st.session_state.ris_output:
