@@ -404,13 +404,13 @@ st.markdown("""
             <li>Click <strong>"Download RIS File"</strong> to save the result</li>
         </ol>
 
-        <h4 style="color: #495057; margin-top: 20px;">✨ Features</h4>
-        <ul style="color: #6c757d; line-height: 1.6;">
+        <h3 style="color: #495057; margin-top: 20px;">✨ Features</h3>
+        <ol style="color: #6c757d; line-height: 1.6;">
             <li>Automatically handles dual-language titles (keeps English version)</li>
             <li>Extracts authors, journal names, volumes, years, issues, ISSN, and page numbers</li>
             <li>Generates proper RIS format compatible with reference managers</li>
             <li>Real-time processing with error handling</li>
-        </ul>
+        </ol>
     </div>
 """, unsafe_allow_html=True)
 
