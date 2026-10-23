@@ -144,8 +144,9 @@ class RISConverter:
         author_names = [name.strip() for name in re.split(r'\s*,\s*', author_part) if name.strip()]
 
         for name in author_names:
-            # DEBUG: This will print in your terminal if the new code is active
-            print(f"DEBUG: Processing author -> '{name}'")
+            # TEMPORARY DEBUG: This will show a yellow box in your Streamlit app if the new code is active!
+            import streamlit as st
+            st.warning(f"DEBUG: Processing author -> '{name}'")
             
             # 1. Clean up trailing garbage (spaces, hyphens, dots)
             name = re.sub(r'\s+', ' ', name).strip()
