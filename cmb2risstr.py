@@ -122,33 +122,45 @@ class RISConverter:
     def extract_authors(self, line: str) -> List[str]:
         """
         Extract author names from the bibliographic line.
+        Authors are between the last single '/' and the double '//' (journal separator).
+
+        Args:
+            line (str): Bibliographic line
+
+        Returns:
+            List[str]: List of author names
         """
         authors = []
 
+        # Find the author section - it's after the last single '/' and before '//'
+        # First, split by '//' to get the part before journal
         before_journal = line.split('//')[0]
+
+        # Find single '/' characters that separate title from detailed authors
         single_slash_positions = []
         i = 0
         while i < len(before_journal):
             if before_journal[i] == '/':
+                # Check if it's a single '/' (not part of '//')
                 if i == 0 or before_journal[i-1] != '/':
                     if i == len(before_journal) - 1 or before_journal[i+1] != '/':
                         single_slash_positions.append(i)
             i += 1
 
         if single_slash_positions:
+            # Authors are after the last single '/'
             last_slash_pos = single_slash_positions[-1]
             author_part = before_journal[last_slash_pos + 1:].strip()
         else:
+            # If no single '/', no detailed author section found
             return authors
 
+        # Parse individual authors separated by commas
         author_names = [name.strip() for name in re.split(r'\s*,\s*', author_part) if name.strip()]
 
+        # Clean up author names and format them properly
         for name in author_names:
-            # TEMPORARY DEBUG: This will show a yellow box in your Streamlit app if the new code is active!
-            import streamlit as st
-            st.warning(f"DEBUG: Processing author -> '{name}'")
-            
-            # 1. Clean up trailing garbage (spaces, hyphens, dots)
+            # 1. Clean up the name: remove trailing hyphens, dots, and extra spaces
             name = re.sub(r'\s+', ' ', name).strip()
             name = name.rstrip(' -.,')
             name = name.strip()
@@ -156,17 +168,20 @@ class RISConverter:
             if not name or len(name) <= 1:
                 continue
             
-            # 2. Match "Initials Surname" (e.g., "B. Kavaldzhieva" or "St. Porojanova")
+            # 2. Try to match "Initials Surname" pattern (e.g., "B. Kavaldzhieva" or "St. Porojanova")
+            # Initials can be one or more letters followed by a dot, possibly with spaces
             match = re.match(r'^(?P<initials>(?:[A-Za-zА-Яа-я]+\.\s*)+)(?P<surname>.+)$', name)
             
             if match:
                 initials = match.group('initials').strip()
                 surname = match.group('surname').strip()
+                # Ensure initials end with a dot
                 if not initials.endswith('.'):
                     initials += '.'
                 name = f"{surname}, {initials}"
             else:
-                # 3. Fallback: split by space, assume last word is surname
+                # 3. Fallback: if it doesn't match "Initials Surname", split by space 
+                # and assume the last word is the surname
                 parts = name.split()
                 if len(parts) >= 2:
                     surname = parts[-1]
