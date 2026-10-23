@@ -164,6 +164,11 @@ class RISConverter:
             if name and len(name) > 1:  # Avoid single characters
                 # Remove trailing periods
                 name = name.rstrip('.')
+                initials_match = re.fullmatch(r'((?:[A-ZА-Я][a-zа-я]?\.\s*)+)(.+)', name)
+                if initials_match:
+                    initials = initials_match.group(1).strip()
+                    surname = initials_match.group(2).strip()
+                    name = f"{surname}, {initials}"
                 authors.append(name)
 
         return authors
