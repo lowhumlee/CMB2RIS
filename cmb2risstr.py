@@ -119,7 +119,7 @@ class RISConverter:
         return title_part if title_part else None
 
 
-    def extract_authors(self, line: str) -> List[str]:
+        def extract_authors(self, line: str) -> List[str]:
         """
         Extract author names from the bibliographic line.
         Authors are between the last single '/' and the double '//' (journal separator).
@@ -160,22 +160,36 @@ class RISConverter:
 
         # Clean up author names and format them properly
         for name in author_names:
+            # 1. Clean up the name: remove trailing hyphens, dots, and extra spaces
             name = re.sub(r'\s+', ' ', name).strip()
+            name = name.rstrip(' -.,')
+            name = name.strip()
+            
             if not name or len(name) <= 1:
                 continue
-
-            name = name.rstrip('.')
-
-            # Convert "E. Peteva" to "Peteva, E."
-            initials_match = re.fullmatch(
-                r'(?P<initials>(?:[A-ZА-Я]\.?\s*)+)(?P<surname>[A-ZА-Я][A-Za-zА-Яа-я-]*(?:\s+[A-ZА-Я][A-Za-zА-Яа-я-]*)*)',
-                name
-            )
-
-            if initials_match:
-                initials = initials_match.group('initials').replace('.', '. ').strip()
-                surname = initials_match.group('surname').strip()
+            
+            # 2. Try to match "Initials Surname" pattern (e.g., "B. Kavaldzhieva" or "St. Porojanova")
+            # Initials can be one or more letters followed by a dot, possibly with spaces
+            match = re.match(r'^(?P<initials>(?:[A-Za-zА-Яа-я]+\.\s*)+)(?P<surname>.+)$', name)
+            
+            if match:
+                initials = match.group('initials').strip()
+                surname = match.group('surname').strip()
+                # Ensure initials end with a dot
+                if not initials.endswith('.'):
+                    initials += '.'
                 name = f"{surname}, {initials}"
+            else:
+                # 3. Fallback: if it doesn't match "Initials Surname", split by space 
+                # and assume the last word is the surname
+                parts = name.split()
+                if len(parts) >= 2:
+                    surname = parts[-1]
+                    initials = " ".join(parts[:-1])
+                    if not initials.endswith('.'):
+                        initials += '.'
+                    name = f"{surname}, {initials}"
+            
             authors.append(name)
 
         return authors
