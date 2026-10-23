@@ -119,7 +119,7 @@ class RISConverter:
         return title_part if title_part else None
 
 
-        def extract_authors(self, line: str) -> List[str]:
+    def extract_authors(self, line: str) -> List[str]:
         """
         Extract author names from the bibliographic line.
         """
