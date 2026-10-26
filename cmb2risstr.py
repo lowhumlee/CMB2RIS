@@ -39,6 +39,7 @@ class RISConverter:
     def extract_title(self, line: str) -> Optional[str]:
         """
         Extract title from the bibliographic line.
+        Retains both Bulgarian and English versions if present.
         """
         author_pattern = r'^[A-Z]+,\s+[A-Z]\.(?:\s+et\s+al\.)?'
         match = re.match(author_pattern, line)
@@ -64,23 +65,9 @@ class RISConverter:
         else:
             title_part = before_journal.strip()
 
-        if '; ' in title_part:
-            titles = title_part.split('; ')
-            if len(titles) > 1:
-                latin_title = None
-                for title in titles:
-                    if re.search(r'[a-zA-Z]', title):
-                        latin_chars = len(re.findall(r'[a-zA-Z]', title))
-                        cyrillic_chars = len(re.findall(r'[а-яё]', title, re.IGNORECASE))
-                        if latin_chars > cyrillic_chars:
-                            latin_title = title.strip()
-                            break
-
-                if latin_title:
-                    title_part = latin_title
-                else:
-                    title_part = titles[-1].strip()
-
+        # FIX #2: Removed the logic that filtered for only the Latin title.
+        # Now it simply returns the full title_part, retaining both languages (e.g., "BG Title; EN Title")
+        
         return title_part if title_part else None
 
     def extract_authors(self, line: str) -> List[str]:
@@ -249,29 +236,21 @@ class RISConverter:
 
 st.markdown("""
     <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="color: #1f77b4;">📚 Bibliographic Text to RIS Converter</h2>
-        <p style="color: #666;">Paste your bibliographic text below and convert it to RIS format</p>
+        <h2 style="color: #1f77b4;">📚 ЦМБ Библиографски записи ➔ RIS Конвертор</h2>
     </div>
 """, unsafe_allow_html=True)
 
+# FIX #1: Updated Instructions to the requested Bulgarian text
 st.markdown("""
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
-        <h3 style="color: #495057; margin-top: 0;">📋 Instructions</h3>
-        <ol style="color: #6c757d; line-height: 1.6;">
-            <li><strong>Paste your bibliographic text</strong> into the text area below</li>
-            <li>The text should contain entries starting with <strong>3+ uppercase letters</strong> (e.g., "ZAYKOVA, K. et al...")</li>
-            <li>Click <strong>"Convert to RIS"</strong> to process the text</li>
-            <li>Review the generated RIS output in the area below</li>
-            <li>Click <strong>"Download RIS File"</strong> to save the result</li>
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 5px solid #1f77b4;">
+        <h3 style="color: #1f77b4; margin-top: 0;">📚 ЦМБ Каталог статии ➔ RIS конвертиране</h3>
+        <ol style="color: #333; line-height: 1.6; font-size: 15px;">
+            <li>В каталога на ЦМБ: <a href="http://nt-cmb.mu-sofia.bg" target="_blank">http://nt-cmb.mu-sofia.bg</a> в <strong>"Комбинирано търсене"</strong> въведете автор: напр. <em>"Pancheva, R."</em> и <strong>"Търсене по фраза"</strong></li>
+            <li>При <strong>"Филтри"</strong> изберете <strong>"Статии"</strong> за Вид документ, както и други филтри (по желание), и кликнете <strong>"Търси"</strong></li>
+            <li>След показване на резултатите, изберете <strong>"Пълно библиографско описание"</strong></li>
+            <li>Кликнете на бутона <strong>MS WORD</strong>, отворете изтегления файл и изберете и копирайте библиографските записи (<strong>CTRL+C</strong>)</li>
         </ol>
-
-        <h3 style="color: #495057; margin-top: 20px;">✨ Features</h3>
-        <ol style="color: #6c757d; line-height: 1.6;">
-            <li>Automatically handles dual-language titles (keeps English version)</li>
-            <li>Extracts authors, journal names, volumes, years, issues, ISSN, and page numbers</li>
-            <li>Generates proper RIS format compatible with reference managers</li>
-            <li>Real-time processing with error handling</li>
-        </ol>
+        <p style="color: #d9534f; font-weight: bold; margin-top: 15px; margin-bottom: 0;">👇 Поставете записите тук (CTRL+V):</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -279,7 +258,7 @@ input_text = st.text_area(
     'Input Text:',
     '',
     height=200,
-    placeholder='Paste your bibliographic text here...\n\nExample:\nZAYKOVA, K. et al. Antibiotic prescribing practices...'
+    placeholder='Поставете библиографските записи тук...'
 )
 
 col1, col2, col3 = st.columns(3)
@@ -287,17 +266,17 @@ col1, col2, col3 = st.columns(3)
 if 'ris_output' not in st.session_state:
     st.session_state.ris_output = ""
 if 'status_message' not in st.session_state:
-     st.session_state.status_message = '<p style="color: #666; text-align: center;">Ready to convert bibliographic text to RIS format</p>'
+     st.session_state.status_message = '<p style="color: #666; text-align: center;">Готов за конвертиране на библиографски записи към RIS формат</p>'
 if 'download_disabled' not in st.session_state:
     st.session_state.download_disabled = True
 
 with col1:
-    convert_button = st.button('🔄 Convert to RIS')
+    convert_button = st.button('🔄 Конвертирай към RIS')
 
 with col2:
     if st.session_state.ris_output:
         st.download_button(
-            label='📥 Download RIS File',
+            label='📥 Изтегли RIS файл',
             data=st.session_state.ris_output.encode('utf-8'),
             file_name='bibliography.ris',
             mime='application/x-research-info-systems',
@@ -305,7 +284,7 @@ with col2:
         )
     else:
         st.download_button(
-            label='📥 Download RIS File',
+            label='📥 Изтегли RIS файл',
             data="".encode('utf-8'),
             file_name='bibliography.ris',
             mime='application/x-research-info-systems',
@@ -313,52 +292,52 @@ with col2:
         )
 
 with col3:
-    clear_button = st.button('🗑️ Clear All')
+    clear_button = st.button('🗑️ Изчисти')
 
 st.markdown(st.session_state.status_message, unsafe_allow_html=True)
 st.markdown("---")
-st.write("Generated RIS Output:")
+st.write("Генериран RIS изход:")
 output_placeholder = st.empty()
 
 converter = RISConverter()
 
 if convert_button:
     if not input_text.strip():
-        st.session_state.status_message = '<p style="color: #d9534f;">⚠️ Paste some text first</p>'
+        st.session_state.status_message = '<p style="color: #d9534f;">⚠️ Моля, поставете текст първо</p>'
         st.session_state.download_disabled = True
     else:
-        st.session_state.status_message = '<p style="color: #5bc0de;">🔄 Converting to RIS format...</p>'
-        output_placeholder.text("Converting...")
+        st.session_state.status_message = '<p style="color: #5bc0de;">🔄 Конвертиране към RIS формат...</p>'
+        output_placeholder.text("Конвертиране...")
 
         try:
             st.session_state.ris_output = converter.process_text_to_ris(input_text)
 
             if "No valid bibliographic entries found" in st.session_state.ris_output:
-                 st.session_state.status_message = '<p style="color: #d9534f;">❌ No valid entries found. Please ensure entries start with 3+ uppercase letters.</p>'
+                 st.session_state.status_message = '<p style="color: #d9534f;">❌ Не са намерени валидни записи. Моля, уверете се, че записите започват с 3+ главни букви.</p>'
                  st.session_state.download_disabled = True
                  output_placeholder.text(st.session_state.ris_output)
             else:
                 record_count = st.session_state.ris_output.count('TY  - JOUR')
-                st.session_state.status_message = f'<p style="color: #5cb85c;">✅ Successfully converted {record_count} record(s) to RIS format</p>'
+                st.session_state.status_message = f'<p style="color: #5cb85c;">✅ Успешно конвертирани {record_count} запис(а) към RIS формат</p>'
                 st.session_state.download_disabled = False
                 output_placeholder.code(st.session_state.ris_output, language='ris')
 
         except Exception as e:
-            st.session_state.status_message = f'<p style="color: #d9534f;">❌ Error during conversion: {str(e)}</p>'
+            st.session_state.status_message = f'<p style="color: #d9534f;">❌ Грешка при конвертирането: {str(e)}</p>'
             st.session_state.download_disabled = True
             output_placeholder.text(f"Error: {e}")
 
-    # FIXED: Replaced deprecated st.experimental_rerun() with st.rerun()
+    # Fixed: Replaced deprecated st.experimental_rerun() with st.rerun()
     st.rerun()
 
 elif clear_button:
     st.session_state.ris_output = ""
     st.session_state.download_disabled = True
-    st.session_state.status_message = '<p style="color: #666; text-align: center;">Ready to convert bibliographic text to RIS format</p>'
-    # FIXED: Replaced deprecated st.experimental_rerun() with st.rerun()
+    st.session_state.status_message = '<p style="color: #666; text-align: center;">Готов за конвертиране на библиографски записи към RIS формат</p>'
+    # Fixed: Replaced deprecated st.experimental_rerun() with st.rerun()
     st.rerun()
 else:
     if st.session_state.ris_output:
         output_placeholder.code(st.session_state.ris_output, language='ris')
     else:
-        output_placeholder.text("RIS output will appear here after conversion.")
+        output_placeholder.text("RIS изходът ще се появи тук след конвертиране.")
